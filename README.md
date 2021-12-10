@@ -6,7 +6,9 @@ Quantum computing is one of the most promising new technologies. Unlike classica
 They permit us to exploit the properties of quantum mechanics to better the performance and computational capabilities. One of such properties is quantum entanglement, that can be obtained by applying *quantum gates* like the Hadamard and the C-NOT gate.
 
 
-Furthermore, quantum computing allows us to have, instead of the classical binary state, a superposition of states like $\ket{\Psi}=\alpha \ket{0}+ \beta \ket{1}$, where $\ket{0}$ and $\ket{1}$ are the quantum states representing the qubits.
+Furthermore, quantum computing allows us to have, instead of the classical binary state, a superposition of states like
+|Psi>= alpha |0> + beta |1>,
+where |0> and |1> are the quantum states representing the qubits.
 
 
 Machine learning is the branch of Artificial Intelligence that takes inspiration from the learning ability of the brain, trying to emulate it via algorithm. 
