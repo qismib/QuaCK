@@ -47,3 +47,8 @@ After that, the ```breast_cancer``` dataset from ```qiskit.ml.dataset``` is anal
 
 
 Finally for each dataset we compare for the classical and quantum case, finding the *success ratio*, the classification time and kernel matrix. This demonstrates how quantum computing can be more efficient. 
+
+## References
+
+https://qiskit.org/documentation/machine-learning/tutorials/03_quantum_kernel.html
+https://qiskit.org/documentation/stable/0.24/tutorials/machine_learning/01_qsvm_classification.html
