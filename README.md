@@ -15,7 +15,7 @@ Machine learning is the branch of Artificial Intelligence that takes inspiration
 *Support vector machines* and *kernels* are used for classification problems, and they belong to the class of *supervised* machine learning methods, meaning that they learn by example. 
 
 
-Support vector machines are a learning model that map a n-dimensional dataset into a space of dimension m, with $m > n$, until the data appear to be separable by a hyperplane.
+Support vector machines are a learning model that map a n-dimensional dataset into a space of dimension m, with m > n, until the data appear to be separable by a hyperplane.
 
 
 The kernel function is employed to simplify and speed the operation, because the computational cost rises while m gets bigger.
