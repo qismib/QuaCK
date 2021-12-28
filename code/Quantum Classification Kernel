@@ -1,1 +1,114 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.svm import SVC
+from sklearn.cluster import SpectralClustering
+from sklearn.metrics import normalized_mutual_info_score
+
+from qiskit import BasicAer
+from qiskit.circuit.library import ZZFeatureMap
+from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit_machine_learning.algorithms import QSVC
+from qiskit_machine_learning.kernels import QuantumKernel
+from qiskit_machine_learning.datasets import ad_hoc_data
+
+seed = 12345
+algorithm_globals.random_seed = seed
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+adhoc_dimension declares that the dimension of the data set is 2, N=2.
+train_features and train_labels represent the variables to be passed onto the training algorithm, as if they were the "x" and "y", intuitively like points as coordinates
+of a function. The aim for "train" is to find the best fitting parameters of a certain f(x) so that this f(x) describes the training data in the best possible way.
+test_features, test_labels are used to check the goodness of the fitting of f(x) onto new points, different than the test ones.
+adhoc_total is a martix that gives us an example of already lassified data relative to their margin. One needs to check how the data described above will fit into this 
+adhoc_data.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+adhoc_dimension = 2
+train_features, train_labels, test_features, test_labels, adhoc_total = ad_hoc_data(
+    training_size=20,  #number of points in the trainig set
+    test_size=5,       #number of points in the test set
+    n=adhoc_dimension,
+    gap=0.3,           
+    plot_data=False, one_hot=False, include_sample_total=True
+)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Let us now plot the function. Adhoc_data will be translated into a numpy matrix.
+The scatter plots are 4 because the algorithm wants firstly to plot the point and then the colour, because for both the test data and the training set there will be "red" 
+and "blue". The training points, represented by the emptied out indicators, were the ones used to calculate the margin regions.
+Those regions were, in this "didactic" example, already implemented in adhoc_data. The test points, represented by the filled in indicators, fall into the coloured parts
+nicely, incating a good fitting, but not an overfitting that would imply the algorithm to be not general if one were to try and see the classification outcome on a new and 
+different data point.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+plt.figure(figsize=(5, 5))
+plt.ylim(0, 2 * np.pi)
+plt.xlim(0, 2 * np.pi)
+plt.imshow(np.asmatrix(adhoc_total).T, interpolation='nearest',
+           origin='lower', cmap='RdBu', extent=[0, 2 * np.pi, 0, 2 * np.pi])
+
+plt.scatter(train_features[np.where(train_labels[:] == 0), 0], train_features[np.where(train_labels[:] == 0), 1],
+            marker='s', facecolors='w', edgecolors='b', label="A train")
+plt.scatter(train_features[np.where(train_labels[:] == 1), 0], train_features[np.where(train_labels[:] == 1), 1],
+            marker='o', facecolors='w', edgecolors='r', label="B train")
+plt.scatter(test_features[np.where(test_labels[:] == 0), 0], test_features[np.where(test_labels[:] == 0), 1],
+            marker='s', facecolors='b', edgecolors='w', label="A test")
+plt.scatter(test_features[np.where(test_labels[:] == 1), 0], test_features[np.where(test_labels[:] == 1), 1],
+            marker='o', facecolors='r', edgecolors='w', label="B test")
+
+plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+plt.title("Ad hoc dataset for classification")
+
+plt.show()
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+https://medium.com/quantumcomputingindia/quantum-machine-learning-102-qsvm-using-qiskit-731956231a54 https://qiskit.org/documentation/stubs/qiskit.circuit.library.ZZFeatureMap.html
+
+adhoc_feature_map utitlizes the function ZZFeatureMap, a Second-order Pauli-Z evolution circuit,used to convert Classical data to Quantum data, with φ(x,y) = (pi - x)(pi - y).
+Then adhoc_backend initializes the backend to run the experiment. Finally, adhoc_kernel uses the forementioned feature_map and quantum_instance to employ a quantum kernel.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+adhoc_feature_map = ZZFeatureMap(feature_dimension=adhoc_dimension, 
+                                 reps=2, entanglement='linear')
+
+adhoc_backend = QuantumInstance(BasicAer.get_backend('qasm_simulator'), shots=1024,
+                                seed_simulator=seed, seed_transpiler=seed)
+
+adhoc_kernel = QuantumKernel(feature_map=adhoc_feature_map, quantum_instance=adhoc_backend)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+The scikit-learn svc algorithm allows us to define a custom kernel by providing the kernel as a callable function. We can do it using the QuantumKernel class in qiskit.
+The result will be the classificaton test score, which indicates how well the test data fall into the classification regions. The closer this value is to 1,
+the better the result is.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+adhoc_svc = SVC(kernel=adhoc_kernel.evaluate)
+adhoc_svc.fit(train_features, train_labels)        #fit means train
+adhoc_score = adhoc_svc.score(test_features, test_labels)
+
+print(f'Callable kernel classification test score: {adhoc_score}')
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+In the above section we trained the adhoc_SVC with train_data and train_labels. Now we want to see the result, so we plot the resulting kernels.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+adhoc_matrix_train = adhoc_kernel.evaluate(x_vec=train_features)
+adhoc_matrix_test = adhoc_kernel.evaluate(x_vec=test_features,
+                                          y_vec=train_features)
+
+fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+axs[0].imshow(np.asmatrix(adhoc_matrix_train),
+              interpolation='nearest', origin='upper', cmap='Blues')
+axs[0].set_title("Ad hoc training kernel matrix")
+axs[1].imshow(np.asmatrix(adhoc_matrix_test),
+              interpolation='nearest', origin='upper', cmap='Reds')
+axs[1].set_title("Ad hoc testing kernel matrix")
+plt.show()
+
+adhoc_svc = SVC(kernel='precomputed')
+adhoc_svc.fit(adhoc_matrix_train, train_labels)
+adhoc_score = adhoc_svc.score(adhoc_matrix_test, test_labels)
+
+print(f'Precomputed kernel classification test score: {adhoc_score}')
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Lets us now analyze a qiskit extension to the SVC from scikit-learn. The procedure will be the same as the formerly implemented code.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+qsvc = QSVC(quantum_kernel=adhoc_kernel)
+qsvc.fit(train_features, train_labels)
+qsvc_score = qsvc.score(test_features, test_labels)
+
+print(f'QSVC classification test score: {qsvc_score}')
+
+
 
